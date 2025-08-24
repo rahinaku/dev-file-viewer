@@ -66,6 +66,39 @@ export async function loader({ request }: Route.LoaderArgs) {
       case ".svg":
         contentType = "image/svg+xml";
         break;
+      case ".mp4":
+        contentType = "video/mp4";
+        break;
+      case ".webm":
+        contentType = "video/webm";
+        break;
+      case ".ogg":
+        contentType = "video/ogg";
+        break;
+      case ".mov":
+        contentType = "video/quicktime";
+        break;
+      case ".avi":
+        contentType = "video/x-msvideo";
+        break;
+      case ".mkv":
+        contentType = "video/x-matroska";
+        break;
+      case ".mp3":
+        contentType = "audio/mpeg";
+        break;
+      case ".wav":
+        contentType = "audio/wav";
+        break;
+      case ".aac":
+        contentType = "audio/aac";
+        break;
+      case ".flac":
+        contentType = "audio/flac";
+        break;
+      case ".m4a":
+        contentType = "audio/mp4";
+        break;
     }
 
     const fileBuffer = await fs.promises.readFile(absoluteImagePath);

@@ -4,6 +4,8 @@ export interface FileItem {
   relativePath: string;  // 相対パス（表示用）
   absolutePath: string;  // 絶対パス（内部処理用）
   isImage: boolean;
+  isVideo: boolean;
+  isAudio: boolean;
 }
 
 export interface FolderItem {
