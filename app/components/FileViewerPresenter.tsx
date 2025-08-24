@@ -1,110 +1,107 @@
 import { useState, useEffect } from "react";
-import { Form } from "react-router";
 import type { ClientDirectoryData, ClientFileItem } from "../types/clientTypes";
-import { FolderIcon } from "./icons/FolderIcon";
-import { FileIcon } from "./icons/FileIcon";
 import { EmptyDirectoryView } from "./EmptyDirectoryView";
 import { FileViewerHeader } from "./FileViewerHeader";
 import { FolderItem } from "./FolderItem";
 import { FileItem } from "./FileItem";
-import { ImageModal } from "./ImageModal";
+import { MediaModal } from "./MediaModal";
 
 interface FileViewerPresenterProps {
-  data: ClientDirectoryData;
+    data: ClientDirectoryData;
 }
 
 export function FileViewerPresenter({ data }: FileViewerPresenterProps) {
-  const [modalImage, setModalImage] = useState<ClientFileItem | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isClient, setIsClient] = useState(false);
+    const [modalFile, setModalFile] = useState<ClientFileItem | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isClient, setIsClient] = useState(false);
 
-  // Ensure client-side rendering for modal
-  useEffect(() => {
-    setIsClient(true);
-    console.log('FileViewerPresenter mounted on client');
-  }, []);
+    // Ensure client-side rendering for modal
+    useEffect(() => {
+        setIsClient(true);
+        console.log('FileViewerPresenter mounted on client');
+    }, []);
 
-  // Extract all images from the directory
-  const images = data.items.filter((item): item is ClientFileItem => 
-    item.type === "file" && item.isImage
-  );
+    // Extract all media files from the directory
+    const mediaFiles = data.items.filter((item): item is ClientFileItem =>
+        item.type === "file" && (item.isImage || item.isVideo || item.isAudio)
+    );
 
-  const openImageModal = (image: ClientFileItem) => {
-    console.log('Opening modal for image:', image.name);
-    setModalImage(image);
-    setIsModalOpen(true);
-  };
+    const openMediaModal = (file: ClientFileItem) => {
+        console.log('Opening modal for file:', file.name);
+        setModalFile(file);
+        setIsModalOpen(true);
+    };
 
-  const closeImageModal = () => {
-    setIsModalOpen(false);
-    setModalImage(null);
-  };
+    const closeMediaModal = () => {
+        setIsModalOpen(false);
+        setModalFile(null);
+    };
 
-  const navigateToNextImage = () => {
-    if (!modalImage) return;
-    const currentIndex = images.findIndex(img => img.path === modalImage.path);
-    const nextIndex = (currentIndex + 1) % images.length;
-    setModalImage(images[nextIndex]);
-  };
+    const navigateToNextFile = () => {
+        if (!modalFile) return;
+        const currentIndex = mediaFiles.findIndex(file => file.path === modalFile.path);
+        const nextIndex = (currentIndex + 1) % mediaFiles.length;
+        setModalFile(mediaFiles[nextIndex]);
+    };
 
-  const navigateToPrevImage = () => {
-    if (!modalImage) return;
-    const currentIndex = images.findIndex(img => img.path === modalImage.path);
-    const prevIndex = currentIndex === 0 ? images.length - 1 : currentIndex - 1;
-    setModalImage(images[prevIndex]);
-  };
+    const navigateToPrevFile = () => {
+        if (!modalFile) return;
+        const currentIndex = mediaFiles.findIndex(file => file.path === modalFile.path);
+        const prevIndex = currentIndex === 0 ? mediaFiles.length - 1 : currentIndex - 1;
+        setModalFile(mediaFiles[prevIndex]);
+    };
 
-  const downloadFile = (file: ClientFileItem) => {
-    console.log('Downloading file:', file.name);
-    const fileUrl = `/api/file?path=${encodeURIComponent(file.path)}`;
-    const link = document.createElement('a');
-    link.href = fileUrl;
-    link.download = file.name;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+    const downloadFile = (file: ClientFileItem) => {
+        console.log('Downloading file:', file.name);
+        const fileUrl = `/api/file?path=${encodeURIComponent(file.path)}`;
+        const link = document.createElement('a');
+        link.href = fileUrl;
+        link.download = file.name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
-  return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="bg-white rounded-lg shadow-sm border p-6">
-          <FileViewerHeader 
-            currentPath={data.currentPath}
-            parentPath={data.parentPath}
-            canGoUp={data.canGoUp}
-          />
+    return (
+        <div className="min-h-screen bg-gray-50 p-6">
+            <div className="max-w-7xl mx-auto">
+                <div className="bg-white rounded-lg shadow-sm border p-6">
+                    <FileViewerHeader
+                        currentPath={data.currentPath}
+                        parentPath={data.parentPath}
+                        canGoUp={data.canGoUp}
+                    />
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-            {data.items.map((item) => (
-              <div key={item.name} className="group">
-                {item.type === "folder" ? (
-                  <FolderItem item={item} />
-                ) : (
-                  <FileItem 
-                    item={item} 
-                    onImageClick={isClient ? openImageModal : undefined}
-                    onFileClick={isClient ? downloadFile : undefined}
-                  />
-                )}
-              </div>
-            ))}
-          </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                        {data.items.map((item) => (
+                            <div key={item.name} className="group">
+                                {item.type === "folder" ? (
+                                    <FolderItem item={item} />
+                                ) : (
+                                    <FileItem
+                                        item={item}
+                                        onImageClick={isClient ? openMediaModal : undefined}
+                                        onFileClick={isClient ? downloadFile : undefined}
+                                    />
+                                )}
+                            </div>
+                        ))}
+                    </div>
 
-          {data.items.length === 0 && <EmptyDirectoryView />}
+                    {data.items.length === 0 && <EmptyDirectoryView />}
+                </div>
+            </div>
+
+            {isClient && (
+                <MediaModal
+                    isOpen={isModalOpen}
+                    currentFile={modalFile}
+                    files={mediaFiles}
+                    onClose={closeMediaModal}
+                    onNext={navigateToNextFile}
+                    onPrev={navigateToPrevFile}
+                />
+            )}
         </div>
-      </div>
-
-      {isClient && (
-        <ImageModal
-          isOpen={isModalOpen}
-          currentImage={modalImage}
-          images={images}
-          onClose={closeImageModal}
-          onNext={navigateToNextImage}
-          onPrev={navigateToPrevImage}
-        />
-      )}
-    </div>
-  );
+    );
 }

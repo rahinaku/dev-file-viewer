@@ -36,7 +36,9 @@ export async function loader({ request }: Route.LoaderArgs) {
             name: item.name,
             type: "file" as const,
             path: item.relativePath,
-            isImage: item.isImage
+            isImage: item.isImage,
+            isVideo: item.isVideo,
+            isAudio: item.isAudio
           };
         } else {
           return {
