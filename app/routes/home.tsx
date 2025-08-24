@@ -1,12 +1,6 @@
 import type { Route } from "./+types/home";
 import { useLoaderData } from "react-router";
-import * as path from "node:path";
-import { config } from "dotenv";
-import { FileViewerService } from "../services/FileViewerService";
 import { FileViewerPresenter } from "../components/FileViewerPresenter";
-
-// .envファイルを読み込み
-config();
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -16,6 +10,13 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
+  // Import Node.js modules only on server-side
+  const { config } = await import("dotenv");
+  const { FileViewerService } = await import("../services/FileViewerService");
+  
+  // .envファイルを読み込み (サーバーサイドのみ)
+  config();
+  
   const url = new URL(request.url);
   const requestedRelativePath = url.searchParams.get("path");
   
