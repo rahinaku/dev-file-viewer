@@ -31,13 +31,13 @@ sudo docker build -t file-viewer .
 
 # スピナーを表示
 spinner "Saving container image..." & pid=$!
-sudo docker save patron-scraping:latest > patron-scraping.tar
+sudo docker save file-viewer:latest > file-viewer.tar
 kill $pid
 wait $pid 2>/dev/null
 
 
 spinner "Importing container image to k3s..." & pid=$!
-sudo k3s ctr images import patron-scraping.tar
+sudo k3s ctr images import file-viewer.tar
 kill $pid
 wait $pid 2>/dev/null
 
