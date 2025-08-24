@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import type { ClientDirectoryData, ClientFileItem } from "../types/clientTypes";
+import type { ClientDirectoryData, ClientFileItem, PaginatedClientDirectoryData } from "../types/clientTypes";
+import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 import { EmptyDirectoryView } from "./EmptyDirectoryView";
 import { FileViewerHeader } from "./FileViewerHeader";
 import { FolderItem } from "./FolderItem";
@@ -7,7 +8,7 @@ import { FileItem } from "./FileItem";
 import { MediaModal } from "./MediaModal";
 
 interface FileViewerPresenterProps {
-    data: ClientDirectoryData;
+    data: PaginatedClientDirectoryData;
 }
 
 export function FileViewerPresenter({ data }: FileViewerPresenterProps) {
@@ -21,8 +22,15 @@ export function FileViewerPresenter({ data }: FileViewerPresenterProps) {
         console.log('FileViewerPresenter mounted on client');
     }, []);
 
-    // Extract all media files from the directory
-    const mediaFiles = data.items.filter((item): item is ClientFileItem =>
+    // Use infinite scroll hook
+    const { items, loading, hasMore, setTargetRef } = useInfiniteScroll({
+        initialData: data,
+        currentPath: data.currentPath,
+        limit: 50
+    });
+
+    // Extract all media files from the current items
+    const mediaFiles = items.filter((item): item is ClientFileItem =>
         item.type === "file" && (item.isImage || item.isVideo || item.isAudio)
     );
 
@@ -73,8 +81,8 @@ export function FileViewerPresenter({ data }: FileViewerPresenterProps) {
                     />
 
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                        {data.items.map((item) => (
-                            <div key={item.name} className="group">
+                        {items.map((item) => (
+                            <div key={`${item.path}-${item.name}`} className="group">
                                 {item.type === "folder" ? (
                                     <FolderItem item={item} />
                                 ) : (
@@ -88,7 +96,30 @@ export function FileViewerPresenter({ data }: FileViewerPresenterProps) {
                         ))}
                     </div>
 
-                    {data.items.length === 0 && <EmptyDirectoryView />}
+                    {/* Loading indicator */}
+                    {loading && (
+                        <div className="flex justify-center py-8">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                        </div>
+                    )}
+
+                    {/* Infinite scroll trigger */}
+                    {hasMore && !loading && (
+                        <div ref={setTargetRef} className="h-4 w-full" />
+                    )}
+
+                    {/* Bottom indicator when no more items */}
+                    {!hasMore && !loading && items.length > 0 && (
+                        <div className="flex justify-center py-8 text-gray-500">
+                            <div className="flex items-center space-x-2">
+                                <div className="h-px bg-gray-300 w-8"></div>
+                                <span className="text-sm">最下部に到達しました</span>
+                                <div className="h-px bg-gray-300 w-8"></div>
+                            </div>
+                        </div>
+                    )}
+
+                    {items.length === 0 && !loading && <EmptyDirectoryView />}
                 </div>
             </div>
 

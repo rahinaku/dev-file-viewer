@@ -24,3 +24,10 @@ export interface ClientDirectoryData {
   items: ClientDirectoryItem[];
   canGoUp: boolean;
 }
+
+export interface PaginatedClientDirectoryData extends ClientDirectoryData {
+  hasMore: boolean;
+  total: number;
+  offset: number;
+  limit: number;
+}
