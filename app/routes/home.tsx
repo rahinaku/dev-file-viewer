@@ -38,7 +38,8 @@ export async function loader({ request }: Route.LoaderArgs) {
             path: item.relativePath,
             isImage: item.isImage,
             isVideo: item.isVideo,
-            isAudio: item.isAudio
+            isAudio: item.isAudio,
+            isZip: item.isZip
           };
         } else {
           return {
