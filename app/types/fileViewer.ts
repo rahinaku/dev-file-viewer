@@ -6,6 +6,7 @@ export interface FileItem {
   isImage: boolean;
   isVideo: boolean;
   isAudio: boolean;
+  isZip: boolean;
 }
 
 export interface FolderItem {

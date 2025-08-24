@@ -6,6 +6,7 @@ export interface ClientFileItem {
   isImage: boolean;
   isVideo: boolean;
   isAudio: boolean;
+  isZip: boolean;
 }
 
 export interface ClientFolderItem {

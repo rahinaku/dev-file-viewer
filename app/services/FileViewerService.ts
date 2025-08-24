@@ -17,6 +17,7 @@ export class FileViewerService {
   private readonly imageExtensions = /\.(jpg|jpeg|png|gif|webp|svg)$/i;
   private readonly videoExtensions = /\.(mp4|webm|ogg|mov|avi|mkv)$/i;
   private readonly audioExtensions = /\.(mp3|wav|ogg|aac|flac|m4a)$/i;
+  private readonly zipExtensions = /\.(zip)$/i;
 
   constructor(options: FileViewerServiceOptions = {}) {
     this.rootFolder = options.rootFolder || process.env.ROOT_FOLDER || process.cwd();
@@ -131,7 +132,8 @@ export class FileViewerService {
       absolutePath: itemPath,
       isImage: this.imageExtensions.test(name),
       isVideo: this.videoExtensions.test(name),
-      isAudio: this.audioExtensions.test(name)
+      isAudio: this.audioExtensions.test(name),
+      isZip: this.zipExtensions.test(name)
     };
   }
 
@@ -172,5 +174,9 @@ export class FileViewerService {
 
   isAudioFile(fileName: string): boolean {
     return this.audioExtensions.test(fileName);
+  }
+
+  isZipFile(fileName: string): boolean {
+    return this.zipExtensions.test(fileName);
   }
 }
