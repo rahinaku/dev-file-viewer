@@ -1,0 +1,111 @@
+
+apiVersion: v1
+data:
+  GID: 'XXXX' # file-viewerの内部で使われるグループID
+  UID: 'XXXX' # file-viewerの内部で使われるユーザーID
+  USER: 'hoge' # file-viewerの内部で使われるユーザー名
+kind: ConfigMap
+metadata:
+  name: file-viewer-config
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: file-viewer-pv
+  labels:
+    name: file-viewer-pv
+spec:
+  capacity:
+    storage: 200Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    # file-viewerで公開するパスを指定
+    path: /mnt/usb-ssd/shere
+  storageClassName: manual
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-file-viewer
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 190Gi
+  storageClassName: manual
+  selector:
+    matchLabels:
+      name: file-viewer-pv
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: file-viewer
+  name: file-viewer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: file-viewer
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: file-viewer
+    spec:
+    securityContext:
+      runAsUser:
+        valueFrom:
+          configMapKeyRef:
+            name: file-viewer-config
+            key: GID
+      runAsGroup:
+        valueFrom:
+          configMapKeyRef:
+            name: file-viewer-config
+            key: GID
+      fsGroup:
+        valueFrom:
+          configMapKeyRef:
+            name: file-viewer-config
+            key: GID
+    supplementalGroups: [4000]
+      containers:
+        - image: file-viewer
+          imagePullPolicy: Never
+          name: file-viewer
+          ports:
+            # file-viewerのポートを指定
+            - containerPort: 3000
+          env:
+          - name: ROOT_FOLDER=
+            value: "/storage"
+            volumeMounts:
+            - mountPath: /storage
+              name: file-viewer-pvc
+          resources: {}
+      volumes:
+        - name: file-viewer-pvc
+          persistentVolumeClaim:
+            claimName: pvc-file-viewer
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: file-viewer
+  name: file-viewer-lb
+spec:
+  ports:
+    - port: 3000
+      protocol: TCP
+      targetPort: 3000
+  selector:
+    app: file-viewer
+  type: LoadBalancer
+status:
+  loadBalancer: {}
