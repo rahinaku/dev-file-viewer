@@ -1,28 +1,46 @@
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import type { ClientFileItem } from "../types/clientTypes";
+import { ImageViewer } from "./ImageViewer";
+import { VideoViewer } from "./VideoViewer";
+import { AudioViewer } from "./AudioViewer";
 
-interface ImageModalProps {
+interface MediaModalProps {
   isOpen: boolean;
-  currentImage: ClientFileItem | null;
-  images: ClientFileItem[];
+  currentFile: ClientFileItem | null;
+  files: ClientFileItem[];
   onClose: () => void;
   onNext: () => void;
   onPrev: () => void;
 }
 
-function downloadImage(image: ClientFileItem) {
-  const imageUrl = `/api/image?path=${encodeURIComponent(image.path)}`;
+function getFileType(fileName: string): 'image' | 'video' | 'audio' | 'unknown' {
+  const ext = fileName.toLowerCase().split('.').pop() || '';
+  
+  if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext)) {
+    return 'image';
+  }
+  if (['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv'].includes(ext)) {
+    return 'video';
+  }
+  if (['mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a'].includes(ext)) {
+    return 'audio';
+  }
+  return 'unknown';
+}
+
+function downloadFile(file: ClientFileItem) {
+  const fileUrl = `/api/image?path=${encodeURIComponent(file.path)}`;
   const link = document.createElement('a');
-  link.href = imageUrl;
-  link.download = image.name;
+  link.href = fileUrl;
+  link.download = file.name;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
 }
 
-export function ImageModal({ isOpen, currentImage, images, onClose, onNext, onPrev }: ImageModalProps) {
-  console.log('ImageModal render:', { isOpen, currentImage: currentImage?.name, imageCount: images.length });
+export function MediaModal({ isOpen, currentFile, files, onClose, onNext, onPrev }: MediaModalProps) {
+  console.log('MediaModal render:', { isOpen, currentFile: currentFile?.name, fileCount: files.length });
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (!isOpen) return;
@@ -40,18 +58,19 @@ export function ImageModal({ isOpen, currentImage, images, onClose, onNext, onPr
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose, onNext, onPrev]);
 
-  // Debug: Always show if we have a current image for testing
-  console.log('ImageModal conditions:', { 
+  // Debug: Always show if we have a current file for testing
+  console.log('MediaModal conditions:', { 
     isOpen, 
-    hasCurrentImage: !!currentImage, 
+    hasCurrentFile: !!currentFile, 
     hasDocument: typeof document !== 'undefined' 
   });
   
-  if (!currentImage || typeof document === 'undefined') return null;
+  if (!currentFile || typeof document === 'undefined') return null;
 
-  const currentIndex = images.findIndex(img => img.path === currentImage.path);
-  const hasNext = currentIndex < images.length - 1;
+  const currentIndex = files.findIndex(file => file.path === currentFile.path);
+  const hasNext = currentIndex < files.length - 1;
   const hasPrev = currentIndex > 0;
+  const fileType = getFileType(currentFile.name);
 
   const modal = (
     <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black ${isOpen ? 'bg-opacity-90' : 'bg-opacity-0 pointer-events-none'}`}>
@@ -68,9 +87,9 @@ export function ImageModal({ isOpen, currentImage, images, onClose, onNext, onPr
 
       {/* Download button */}
       <button
-        onClick={() => downloadImage(currentImage)}
+        onClick={() => downloadFile(currentFile)}
         className="absolute top-4 right-16 text-white hover:text-gray-300 z-10"
-        aria-label="Download image"
+        aria-label="Download file"
       >
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -82,7 +101,7 @@ export function ImageModal({ isOpen, currentImage, images, onClose, onNext, onPr
         <button
           onClick={onPrev}
           className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 z-10"
-          aria-label="Previous image"
+          aria-label="Previous file"
         >
           <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -94,7 +113,7 @@ export function ImageModal({ isOpen, currentImage, images, onClose, onNext, onPr
         <button
           onClick={onNext}
           className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 z-10"
-          aria-label="Next image"
+          aria-label="Next file"
         >
           <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -102,24 +121,21 @@ export function ImageModal({ isOpen, currentImage, images, onClose, onNext, onPr
         </button>
       )}
 
-      {/* Image container */}
+      {/* Media container */}
       <div 
-        className="relative max-w-[90vw] max-h-[90vh] flex items-center justify-center"
+        className="relative w-[90vw] h-[90vh] flex items-center justify-center p-4"
         onClick={onClose}
       >
-        <img
-          src={`/api/image?path=${encodeURIComponent(currentImage.path)}`}
-          alt={currentImage.name}
-          className="max-w-full max-h-full object-contain"
-          onClick={(e) => e.stopPropagation()}
-        />
+        {fileType === 'image' && <ImageViewer file={currentFile} />}
+        {fileType === 'video' && <VideoViewer file={currentFile} />}
+        {fileType === 'audio' && <AudioViewer file={currentFile} />}
       </div>
 
-      {/* Image info */}
+      {/* File info */}
       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white text-center">
-        <p className="text-lg font-medium">{currentImage.name}</p>
+        <p className="text-lg font-medium">{currentFile.name}</p>
         <p className="text-sm text-gray-300">
-          {currentIndex + 1} / {images.length}
+          {currentIndex + 1} / {files.length}
         </p>
       </div>
     </div>

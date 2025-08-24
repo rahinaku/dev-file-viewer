@@ -4,6 +4,8 @@ export interface ClientFileItem {
   type: "file";
   path: string;  // 相対パス
   isImage: boolean;
+  isVideo: boolean;
+  isAudio: boolean;
 }
 
 export interface ClientFolderItem {
