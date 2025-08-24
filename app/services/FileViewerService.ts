@@ -69,6 +69,66 @@ export class FileViewerService {
     }
   }
 
+  async getPaginatedDirectoryData(
+    requestedRelativePath?: string, 
+    offset: number = 0, 
+    limit: number = 50
+  ): Promise<DirectoryData & { hasMore: boolean; total: number; offset: number; limit: number }> {
+    const resolvedRootFolder = path.resolve(this.rootFolder);
+    
+    // 相対パスから絶対パスに変換
+    let currentAbsolutePath: string;
+    if (requestedRelativePath) {
+      const normalizedRelativePath = requestedRelativePath.startsWith('/') 
+        ? requestedRelativePath.slice(1) 
+        : requestedRelativePath;
+      currentAbsolutePath = path.resolve(resolvedRootFolder, normalizedRelativePath);
+    } else {
+      currentAbsolutePath = resolvedRootFolder;
+    }
+    
+    try {
+      await this.validateDirectory(currentAbsolutePath);
+      await this.validatePathWithinRoot(currentAbsolutePath);
+      
+      // 全てのアイテムを取得
+      const allItems = await this.readDirectoryItems(currentAbsolutePath);
+      const total = allItems.length;
+      
+      // ページネーション適用
+      const paginatedItems = allItems.slice(offset, offset + limit);
+      const hasMore = offset + limit < total;
+      
+      const parentAbsolutePath = path.dirname(currentAbsolutePath);
+      const resolvedCurrentPath = path.resolve(currentAbsolutePath);
+      const resolvedParentPath = path.resolve(parentAbsolutePath);
+      
+      // 相対パスに変換
+      const currentRelativePath = this.getRelativePath(resolvedCurrentPath);
+      const parentRelativePath = this.getRelativePath(resolvedParentPath);
+      
+      // ROOT_FOLDERより上に行けないかチェック
+      const canGoUp = resolvedCurrentPath !== resolvedRootFolder && 
+                      resolvedParentPath.startsWith(resolvedRootFolder) &&
+                      resolvedCurrentPath !== path.parse(resolvedCurrentPath).root;
+      
+      return {
+        currentRelativePath,
+        currentAbsolutePath,
+        parentRelativePath,
+        parentAbsolutePath,
+        items: await this.processDirectoryItems(paginatedItems, currentAbsolutePath),
+        canGoUp,
+        hasMore,
+        total,
+        offset,
+        limit
+      };
+    } catch (error) {
+      throw new Error("Directory not found");
+    }
+  }
+
   private async validateDirectory(directoryPath: string): Promise<void> {
     const stats = await fs.promises.stat(directoryPath);
     if (!stats.isDirectory()) {

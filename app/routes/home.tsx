@@ -11,11 +11,7 @@ export function meta({}: Route.MetaArgs) {
 
 export async function loader({ request }: Route.LoaderArgs) {
   // Import Node.js modules only on server-side
-  const { config } = await import("dotenv");
   const { FileViewerService } = await import("../services/FileViewerService");
-  
-  // .envファイルを読み込み (サーバーサイドのみ)
-  config();
   
   const url = new URL(request.url);
   const requestedRelativePath = url.searchParams.get("path");
@@ -26,11 +22,15 @@ export async function loader({ request }: Route.LoaderArgs) {
     // 相対パスからDirectoryDataを取得
     const directoryData = await fileViewerService.getDirectoryData(requestedRelativePath || undefined);
     
-    // レスポンスから絶対パス情報を除外し、クライアント用の型に変換
+    // 通常のページリクエストの場合
+    const totalItems = directoryData.items.length;
+    const initialLimit = 50;
+    const shouldUsePagination = totalItems > initialLimit;
+    
     const sanitizedData = {
       currentPath: directoryData.currentRelativePath,
       parentPath: directoryData.parentRelativePath,
-      items: directoryData.items.map(item => {
+      items: directoryData.items.slice(0, initialLimit).map(item => {
         if (item.type === "file") {
           return {
             name: item.name,
@@ -50,15 +50,21 @@ export async function loader({ request }: Route.LoaderArgs) {
           };
         }
       }),
-      canGoUp: directoryData.canGoUp
+      canGoUp: directoryData.canGoUp,
+      hasMore: shouldUsePagination,
+      total: totalItems,
+      offset: 0,
+      limit: initialLimit
     };
     
     return sanitizedData;
   } catch (error) {
+    console.error('Directory loading error:', error);
     if (error instanceof Response) {
       throw error;
     }
-    throw new Response("Directory not found", { status: 404 });
+    const errorMessage = error instanceof Error ? error.message : "Directory not found";
+    throw new Response(errorMessage, { status: 404 });
   }
 }
 
