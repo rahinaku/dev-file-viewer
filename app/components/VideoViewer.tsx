@@ -1,4 +1,5 @@
 import type { ClientFileItem } from "../types/clientTypes";
+import { getFileApiEndpoint } from "~/lib/fileTypeUtils";
 
 interface VideoViewerProps {
   file: ClientFileItem;
@@ -7,7 +8,7 @@ interface VideoViewerProps {
 export function VideoViewer({ file }: VideoViewerProps) {
   return (
     <video
-      src={`/api/image?path=${encodeURIComponent(file.path)}`}
+      src={`${getFileApiEndpoint(file.path)}?path=${encodeURIComponent(file.path)}`}
       className="w-full h-full object-contain"
       controls
       onClick={(e) => e.stopPropagation()}
