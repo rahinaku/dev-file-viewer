@@ -1,3 +1,5 @@
+import { getFileApiEndpoint } from "~/lib/fileTypeUtils";
+
 interface FolderPreviewImagesProps {
   images: string[];
 }
@@ -13,7 +15,7 @@ export function FolderPreviewImages({ images }: FolderPreviewImagesProps) {
             images.length === 3 && index === 0 ? "col-span-2" : ""
           }`}
           style={{
-            backgroundImage: `url("/api/image?path=${encodeURIComponent(imagePath)}")`,
+            backgroundImage: `url("${getFileApiEndpoint(imagePath)}?path=${encodeURIComponent(imagePath)}")`,
             minHeight: images.length === 1 ? "100%" : "50%"
           }}
         />

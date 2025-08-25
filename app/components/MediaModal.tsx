@@ -4,6 +4,7 @@ import type { ClientFileItem } from "../types/clientTypes";
 import { ImageViewer } from "./ImageViewer";
 import { VideoViewer } from "./VideoViewer";
 import { AudioViewer } from "./AudioViewer";
+import { getFileApiEndpoint, getFileType } from "~/lib/fileTypeUtils";
 
 interface MediaModalProps {
   isOpen: boolean;
@@ -14,23 +15,8 @@ interface MediaModalProps {
   onPrev: () => void;
 }
 
-function getFileType(fileName: string): 'image' | 'video' | 'audio' | 'unknown' {
-  const ext = fileName.toLowerCase().split('.').pop() || '';
-  
-  if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext)) {
-    return 'image';
-  }
-  if (['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv'].includes(ext)) {
-    return 'video';
-  }
-  if (['mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a'].includes(ext)) {
-    return 'audio';
-  }
-  return 'unknown';
-}
-
 function downloadFile(file: ClientFileItem) {
-  const fileUrl = `/api/image?path=${encodeURIComponent(file.path)}`;
+  const fileUrl = `${getFileApiEndpoint(file.path)}?path=${encodeURIComponent(file.path)}`;
   const link = document.createElement('a');
   link.href = fileUrl;
   link.download = file.name;
@@ -70,7 +56,7 @@ export function MediaModal({ isOpen, currentFile, files, onClose, onNext, onPrev
   const currentIndex = files.findIndex(file => file.path === currentFile.path);
   const hasNext = currentIndex < files.length - 1;
   const hasPrev = currentIndex > 0;
-  const fileType = getFileType(currentFile.name);
+  const fileType = getFileType(currentFile.path);
 
   const modal = (
     <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black ${isOpen ? 'bg-opacity-90' : 'bg-opacity-0 pointer-events-none'}`}>
