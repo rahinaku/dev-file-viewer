@@ -1,5 +1,7 @@
 import type { ClientFileItem } from "../types/clientTypes";
 import { FileIcon } from "./icons/FileIcon";
+import { VideoIcon } from "./icons/VideoIcon";
+import { AudioIcon } from "./icons/AudioIcon";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { useState } from "react";
 import { getFileApiEndpoint } from "~/lib/fileTypeUtils";
@@ -44,9 +46,21 @@ export function FileItem({ item, onImageClick, onFileClick }: FileItemProps) {
   };
 
   return (
-    <div className="p-3 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition-shadow duration-200">
+    <div className="p-3 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition-shadow duration-200 relative">
+      {/* Media type badge */}
+      {(item.isVideo || item.isAudio) && (
+        <div className={`absolute top-1 right-1 z-10 px-2 py-1 rounded-full text-xs font-bold text-white ${
+          item.isVideo ? 'bg-blue-500' : 'bg-green-500'
+        }`}>
+          {item.isVideo ? 'VIDEO' : 'AUDIO'}
+        </div>
+      )}
       <div 
-        className={`aspect-square mb-3 bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden ${
+        className={`aspect-square mb-3 rounded-lg flex items-center justify-center overflow-hidden ${
+          item.isVideo ? 'bg-blue-50' :
+          item.isAudio ? 'bg-green-50' :
+          'bg-gray-50'
+        } ${
           isExtracting ? 'cursor-wait' : 
           ((item.isImage || item.isVideo || item.isAudio) && onImageClick) || onFileClick ? 'cursor-pointer hover:scale-[1.02] transition-transform duration-200' : ''
         }`}
@@ -63,6 +77,14 @@ export function FileItem({ item, onImageClick, onFileClick }: FileItemProps) {
             <LoadingSpinner />
             <span className="text-xs text-gray-500">解凍中...</span>
           </div>
+        ) : item.isVideo ? (
+          <div className="flex flex-col items-center gap-1">
+            <VideoIcon />
+          </div>
+        ) : item.isAudio ? (
+          <div className="flex flex-col items-center gap-1">
+            <AudioIcon />
+          </div>
         ) : (
           <FileIcon />
         )}
@@ -70,7 +92,12 @@ export function FileItem({ item, onImageClick, onFileClick }: FileItemProps) {
       <p className="text-sm font-medium text-gray-900 truncate" title={item.name}>
         {item.name}
       </p>
-      <p className="text-xs text-gray-500">File</p>
+      <p className="text-xs text-gray-500">
+        {item.isImage ? 'Image' : 
+         item.isVideo ? 'Video File' : 
+         item.isAudio ? 'Audio File' : 
+         item.isZip ? 'Archive' : 'File'}
+      </p>
     </div>
   );
 }
