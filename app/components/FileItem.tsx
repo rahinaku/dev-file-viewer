@@ -2,6 +2,7 @@ import type { ClientFileItem } from "../types/clientTypes";
 import { FileIcon } from "./icons/FileIcon";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { useState } from "react";
+import { getFileApiEndpoint } from "~/lib/fileTypeUtils";
 
 interface FileItemProps {
   item: ClientFileItem;
@@ -53,7 +54,7 @@ export function FileItem({ item, onImageClick, onFileClick }: FileItemProps) {
       >
         {item.isImage ? (
           <img
-            src={`/api/image?path=${encodeURIComponent(item.path)}`}
+            src={`${getFileApiEndpoint(item.path)}?path=${encodeURIComponent(item.path)}`}
             alt={item.name}
             className="w-full h-full object-cover"
           />
