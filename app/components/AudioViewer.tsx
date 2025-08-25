@@ -1,4 +1,5 @@
 import type { ClientFileItem } from "../types/clientTypes";
+import { getFileApiEndpoint } from "~/lib/fileTypeUtils";
 
 interface AudioViewerProps {
   file: ClientFileItem;
@@ -13,7 +14,7 @@ export function AudioViewer({ file }: AudioViewerProps) {
           <path fillRule="evenodd" d="M13.828 7.172a1 1 0 011.414 0A5.983 5.983 0 0117 12a5.983 5.983 0 01-1.758 4.828 1 1 0 01-1.414-1.414A3.987 3.987 0 0015 12a3.987 3.987 0 00-1.172-2.828 1 1 0 010-1.414z" clipRule="evenodd" />
         </svg>
         <audio
-          src={`/api/image?path=${encodeURIComponent(file.path)}`}
+          src={`${getFileApiEndpoint(file.path)}?path=${encodeURIComponent(file.path)}`}
           className="w-full h-12"
           controls
           preload="metadata"
