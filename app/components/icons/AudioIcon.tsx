@@ -1,20 +1,7 @@
+import { AiFillSound } from 'react-icons/ai';
+
 export function AudioIcon() {
   return (
-    <svg 
-      className="w-8 h-8 text-green-500" 
-      fill="currentColor" 
-      viewBox="0 0 20 20"
-    >
-      <path 
-        fillRule="evenodd" 
-        d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM15.657 6.343a1 1 0 011.414 0A9.972 9.972 0 0119 12a9.972 9.972 0 01-1.929 5.657 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 12a7.971 7.971 0 00-1.343-4.243 1 1 0 010-1.414z" 
-        clipRule="evenodd" 
-      />
-      <path 
-        fillRule="evenodd" 
-        d="M13.828 7.172a1 1 0 011.414 0A5.983 5.983 0 0117 12a5.983 5.983 0 01-1.758 4.828 1 1 0 01-1.414-1.414A3.987 3.987 0 0015 12a3.987 3.987 0 00-1.172-2.828 1 1 0 010-1.414z" 
-        clipRule="evenodd" 
-      />
-    </svg>
+    <AiFillSound className="w-8 h-8 text-green-500" />
   );
 }

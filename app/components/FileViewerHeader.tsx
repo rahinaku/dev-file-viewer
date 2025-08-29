@@ -1,4 +1,5 @@
 import { Form } from "react-router";
+import { AiOutlineArrowUp, AiOutlineSortAscending, AiOutlineSortDescending } from 'react-icons/ai';
 
 interface FileViewerHeaderProps {
   currentPath: string;
@@ -40,7 +41,7 @@ export function FileViewerHeader({ currentPath, parentPath, canGoUp, sortBy = "n
                 : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
             }`}
           >
-            Name {sortBy === "name" && (sortOrder === "asc" ? "↑" : "↓")}
+            Name {sortBy === "name" && (sortOrder === "asc" ? <AiOutlineSortAscending className="inline w-4 h-4 ml-1" /> : <AiOutlineSortDescending className="inline w-4 h-4 ml-1" />)}
           </button>
           <button
             onClick={() => handleSortChange("type")}
@@ -50,7 +51,7 @@ export function FileViewerHeader({ currentPath, parentPath, canGoUp, sortBy = "n
                 : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
             }`}
           >
-            Type {sortBy === "type" && (sortOrder === "asc" ? "↑" : "↓")}
+            Type {sortBy === "type" && (sortOrder === "asc" ? <AiOutlineSortAscending className="inline w-4 h-4 ml-1" /> : <AiOutlineSortDescending className="inline w-4 h-4 ml-1" />)}
           </button>
           <button
             onClick={() => handleSortChange("date")}
@@ -60,7 +61,7 @@ export function FileViewerHeader({ currentPath, parentPath, canGoUp, sortBy = "n
                 : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
             }`}
           >
-            Modified {sortBy === "date" && (sortOrder === "asc" ? "↑" : "↓")}
+            Modified {sortBy === "date" && (sortOrder === "asc" ? <AiOutlineSortAscending className="inline w-4 h-4 ml-1" /> : <AiOutlineSortDescending className="inline w-4 h-4 ml-1" />)}
           </button>
         </div>
       </div>
@@ -72,7 +73,7 @@ export function FileViewerHeader({ currentPath, parentPath, canGoUp, sortBy = "n
             type="submit"
             className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
-            <span>←</span>
+            <AiOutlineArrowUp className="w-4 h-4" />
             Up to Parent Directory
           </button>
         </Form>
