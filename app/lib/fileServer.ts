@@ -4,9 +4,12 @@ import { config } from "dotenv";
 
 config();
 
+import sharp from "sharp";
+
 interface FileServerOptions {
   allowedExtensions: string[];
   getContentType: (ext: string) => string;
+  isPreview?: boolean;
 }
 
 export async function serveFile(request: Request, options: FileServerOptions) {
@@ -28,7 +31,8 @@ export async function serveFile(request: Request, options: FileServerOptions) {
         relativeFilePath, 
         absoluteFilePath,
         rootFolder: resolvedRootFolder,
-        rangeHeader: request.headers.get('range')
+        rangeHeader: request.headers.get('range'),
+        isPreview: options.isPreview
       });
     }
     
@@ -55,10 +59,37 @@ export async function serveFile(request: Request, options: FileServerOptions) {
     const contentType = options.getContentType(ext);
     const fileSize = stats.size;
     
-    // Handle Range requests for media files
+    // Handle image preview/thumbnail generation
+    if (options.isPreview && ['.jpg', '.jpeg', '.png', '.webp'].includes(ext)) {
+      try {
+        const resizedBuffer = await sharp(absoluteFilePath)
+          .resize(200, 200, { 
+            fit: 'cover',
+            position: 'centre'
+          })
+          .jpeg({ 
+            quality: 70,
+            progressive: true 
+          })
+          .toBuffer();
+        
+        return new Response(new Uint8Array(resizedBuffer), {
+          headers: {
+            "Content-Type": "image/jpeg",
+            "Content-Length": resizedBuffer.length.toString(),
+            "Cache-Control": "public, max-age=86400", // Cache for 24 hours
+          },
+        });
+      } catch (sharpError) {
+        console.warn("Sharp processing failed, falling back to original:", sharpError);
+        // Fall back to original file if sharp fails
+      }
+    }
+    
+    // Handle Range requests for media files (skip for previews)
     const rangeHeader = request.headers.get('range');
     
-    if (rangeHeader) {
+    if (rangeHeader && !options.isPreview) {
       const ranges = parseRange(fileSize, rangeHeader);
       
       if (ranges && ranges.length === 1) {
@@ -100,7 +131,7 @@ export async function serveFile(request: Request, options: FileServerOptions) {
         "Content-Type": contentType,
         "Content-Length": fileSize.toString(),
         "Accept-Ranges": "bytes",
-        "Cache-Control": "public, max-age=3600",
+        "Cache-Control": options.isPreview ? "public, max-age=86400" : "public, max-age=3600",
       },
     });
   } catch (error) {
