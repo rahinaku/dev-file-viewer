@@ -23,10 +23,20 @@ export function FileViewerPresenter({ data }: FileViewerPresenterProps) {
     }, []);
 
     // Use infinite scroll hook
-    const { items, loading, hasMore, setTargetRef } = useInfiniteScroll({
+    const { 
+        items, 
+        loading, 
+        hasMore, 
+        setTargetRef,
+        sortBy,
+        sortOrder,
+        handleSortChange
+    } = useInfiniteScroll({
         initialData: data,
         currentPath: data.currentPath,
-        limit: 50
+        limit: 50,
+        sortBy: data.sortBy,
+        sortOrder: data.sortOrder
     });
 
     // Extract all media files from the current items
@@ -78,6 +88,9 @@ export function FileViewerPresenter({ data }: FileViewerPresenterProps) {
                         currentPath={data.currentPath}
                         parentPath={data.parentPath}
                         canGoUp={data.canGoUp}
+                        sortBy={sortBy}
+                        sortOrder={sortOrder}
+                        onSortChange={handleSortChange}
                     />
 
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
@@ -96,26 +109,13 @@ export function FileViewerPresenter({ data }: FileViewerPresenterProps) {
                         ))}
                     </div>
 
-                    {/* Loading indicator */}
-                    {loading && (
-                        <div className="flex justify-center py-8">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                        </div>
-                    )}
-
-                    {/* Infinite scroll trigger */}
-                    {hasMore && !loading && (
-                        <div ref={setTargetRef} className="h-4 w-full" />
-                    )}
-
-                    {/* Bottom indicator when no more items */}
-                    {!hasMore && !loading && items.length > 0 && (
-                        <div className="flex justify-center py-8 text-gray-500">
-                            <div className="flex items-center space-x-2">
-                                <div className="h-px bg-gray-300 w-8"></div>
-                                <span className="text-sm">最下部に到達しました</span>
-                                <div className="h-px bg-gray-300 w-8"></div>
-                            </div>
+                    {hasMore && (
+                        <div ref={setTargetRef} className="flex justify-center py-4">
+                            {loading ? (
+                                <div className="text-gray-500">Loading more...</div>
+                            ) : (
+                                <div className="text-gray-400">Scroll for more</div>
+                            )}
                         </div>
                     )}
 
