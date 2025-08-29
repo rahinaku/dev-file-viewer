@@ -7,5 +7,6 @@ export default [
   route("api/audio", "routes/api.audio.tsx"),
   route("api/video", "routes/api.video.tsx"),
   route("api/file", "routes/api.file.tsx"),
-  route("api/extract-zip", "routes/api.extract-zip.tsx")
+  route("api/extract-zip", "routes/api.extract-zip.tsx"),
+  route(".well-known/appspecific/com.chrome.devtools.json", "routes/chrome-devtools.tsx")
 ] satisfies RouteConfig;
