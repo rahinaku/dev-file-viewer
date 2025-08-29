@@ -68,7 +68,7 @@ export function FileItem({ item, onImageClick, onFileClick }: FileItemProps) {
       >
         {item.isImage ? (
           <img
-            src={`${getFileApiEndpoint(item.path)}?path=${encodeURIComponent(item.path)}`}
+            src={`${getFileApiEndpoint(item.path)}?path=${encodeURIComponent(item.path)}&thumbnail=true`}
             alt={item.name}
             className="w-full h-full object-cover"
           />
@@ -89,15 +89,13 @@ export function FileItem({ item, onImageClick, onFileClick }: FileItemProps) {
           <FileIcon />
         )}
       </div>
-      <p className="text-sm font-medium text-gray-900 truncate" title={item.name}>
+      
+      <div className="text-sm text-gray-900 font-medium truncate">
         {item.name}
-      </p>
-      <p className="text-xs text-gray-500">
-        {item.isImage ? 'Image' : 
-         item.isVideo ? 'Video File' : 
-         item.isAudio ? 'Audio File' : 
-         item.isZip ? 'Archive' : 'File'}
-      </p>
+      </div>
+      <div className="text-xs text-gray-500 mt-1">
+        {new Date(item.modifiedDate).toLocaleDateString()}
+      </div>
     </div>
   );
 }

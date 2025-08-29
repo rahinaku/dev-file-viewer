@@ -22,8 +22,13 @@ function getImageContentType(ext: string): string {
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
+  const url = new URL(request.url);
+  const thumbnail = url.searchParams.get("thumbnail");
+  const preview = url.searchParams.get("preview");
+  
   return serveFile(request, {
     allowedExtensions: imageExtensions,
     getContentType: getImageContentType,
+    isPreview: thumbnail === "true" || preview === "true",
   });
 }
