@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { ClientFileItem } from "../types/clientTypes";
 import { ImageViewer } from "./ImageViewer";
@@ -27,13 +27,89 @@ function downloadFile(file: ClientFileItem) {
 
 export function MediaModal({ isOpen, currentFile, files, onClose, onNext, onPrev }: MediaModalProps) {
   console.log('MediaModal render:', { isOpen, currentFile: currentFile?.name, fileCount: files.length });
+  
+  // Swipe state management
+  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
+  const [touchMove, setTouchMove] = useState<{ x: number; y: number } | null>(null);
+  const [isSwipe, setIsSwipe] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Handle touch start
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    setTouchStart({ x: touch.clientX, y: touch.clientY });
+    setTouchMove(null);
+    setIsSwipe(false);
+  };
+
+  // Handle touch move
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStart) return;
+    
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - touchStart.x;
+    const deltaY = touch.clientY - touchStart.y;
+    
+    setTouchMove({ x: touch.clientX, y: touch.clientY });
+    
+    // Determine if this is a horizontal swipe
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
+      setIsSwipe(true);
+      e.preventDefault(); // Prevent scrolling
+      
+      // Apply visual feedback during swipe
+      if (containerRef.current) {
+        const clampedDelta = Math.max(-100, Math.min(100, deltaX * 0.3)); // Limit and reduce movement
+        containerRef.current.style.transform = `translateX(${clampedDelta}px)`;
+        containerRef.current.style.transition = 'none';
+      }
+    }
+  };
+
+  // Handle touch end
+  const handleTouchEnd = () => {
+    // Reset visual transform with animation
+    if (containerRef.current) {
+      containerRef.current.style.transition = 'transform 0.3s ease-out';
+      containerRef.current.style.transform = 'translateX(0)';
+    }
+
+    if (!touchStart || !touchMove || !isSwipe) {
+      setTouchStart(null);
+      setTouchMove(null);
+      setIsSwipe(false);
+      return;
+    }
+
+    const deltaX = touchMove.x - touchStart.x;
+    const threshold = 50; // Minimum swipe distance
+
+    if (Math.abs(deltaX) > threshold) {
+      if (deltaX > 0) {
+        // Swipe right - go to previous image
+        const currentIndex = files.findIndex(file => file.path === currentFile?.path);
+        if (currentIndex > 0) {
+          onPrev();
+        }
+      } else {
+        // Swipe left - go to next image
+        const currentIndex = files.findIndex(file => file.path === currentFile?.path);
+        if (currentIndex < files.length - 1) {
+          onNext();
+        }
+      }
+    }
+
+    setTouchStart(null);
+    setTouchMove(null);
+    setIsSwipe(false);
+  };
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (!isOpen) return;
       
-      if (event.key === "Escape") {
-        onClose();
-      } else if (event.key === "ArrowRight") {
+      if (event.key === "ArrowRight") {
         onNext();
       } else if (event.key === "ArrowLeft") {
         onPrev();
@@ -109,12 +185,35 @@ export function MediaModal({ isOpen, currentFile, files, onClose, onNext, onPrev
 
       {/* Media container */}
       <div 
-        className="relative w-[90vw] h-[90vh] flex items-center justify-center p-4"
-        onClick={onClose}
+        ref={containerRef}
+        className="relative w-[90vw] h-[90vh] flex items-center justify-center p-4 touch-pan-y"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
         {fileType === 'image' && <ImageViewer file={currentFile} />}
         {fileType === 'video' && <VideoViewer file={currentFile} />}
         {fileType === 'audio' && <AudioViewer file={currentFile} />}
+        
+        {/* Swipe indicators */}
+        {isSwipe && touchStart && touchMove && (
+          <>
+            {touchMove.x - touchStart.x > 30 && (
+              <div className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 rounded-full p-2">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </div>
+            )}
+            {touchStart.x - touchMove.x > 30 && (
+              <div className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 rounded-full p-2">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       {/* File info */}

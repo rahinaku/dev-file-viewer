@@ -15,7 +15,7 @@ export function FolderPreviewImages({ images }: FolderPreviewImagesProps) {
             images.length === 3 && index === 0 ? "col-span-2" : ""
           }`}
           style={{
-            backgroundImage: `url("${getFileApiEndpoint(imagePath)}?path=${encodeURIComponent(imagePath)}")`,
+            backgroundImage: `url("${getFileApiEndpoint(imagePath)}?path=${encodeURIComponent(imagePath)}&thumbnail=true")`,
             minHeight: images.length === 1 ? "100%" : "50%"
           }}
         />
