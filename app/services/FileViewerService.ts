@@ -23,7 +23,11 @@ export class FileViewerService {
     this.rootFolder = options.rootFolder || process.env.ROOT_FOLDER || process.cwd();
   }
 
-  async getDirectoryData(requestedRelativePath?: string): Promise<DirectoryData> {
+  async getDirectoryData(
+    requestedRelativePath?: string,
+    sortBy: string = "name",
+    sortOrder: "asc" | "desc" = "asc"
+  ): Promise<DirectoryData> {
     const resolvedRootFolder = path.resolve(this.rootFolder);
     
     // 相対パスから絶対パスに変換
@@ -61,7 +65,7 @@ export class FileViewerService {
         currentAbsolutePath,
         parentRelativePath,
         parentAbsolutePath,
-        items: await this.processDirectoryItems(items, currentAbsolutePath),
+        items: await this.processDirectoryItems(items, currentAbsolutePath, sortBy, sortOrder),
         canGoUp
       };
     } catch (error) {
@@ -151,7 +155,9 @@ export class FileViewerService {
 
   private async processDirectoryItems(
     items: fs.Dirent[], 
-    currentPath: string
+    currentPath: string,
+    sortBy: string = "name",
+    sortOrder: "asc" | "desc" = "asc"
   ): Promise<DirectoryItem[]> {
     const folders: FolderItem[] = [];
     const files: FileItem[] = [];
@@ -163,15 +169,57 @@ export class FileViewerService {
         const folderItem = await this.createFolderItem(item.name, itemPath);
         folders.push(folderItem);
       } else {
-        const fileItem = this.createFileItem(item.name, itemPath);
+        const fileItem = await this.createFileItem(item.name, itemPath);
         files.push(fileItem);
       }
     }
 
-    return [...folders, ...files];
+    // Sort folders and files separately
+    const sortFunction = (a: DirectoryItem, b: DirectoryItem) => {
+      let comparison = 0;
+      
+      if (sortBy === "name") {
+        comparison = a.name.localeCompare(b.name);
+      } else if (sortBy === "type") {
+        // For type sorting, folders come first, then files sorted by extension
+        if (a.type === "folder" && b.type === "file") return -1;
+        if (a.type === "file" && b.type === "folder") return 1;
+        
+        if (a.type === "file" && b.type === "file") {
+          const extA = path.extname(a.name).toLowerCase();
+          const extB = path.extname(b.name).toLowerCase();
+          comparison = extA.localeCompare(extB);
+          if (comparison === 0) {
+            comparison = a.name.localeCompare(b.name);
+          }
+        } else {
+          comparison = a.name.localeCompare(b.name);
+        }
+      } else if (sortBy === "date" || sortBy === "modified") {
+        // For date sorting, compare modification times
+        const dateA = a.modifiedDate.getTime();
+        const dateB = b.modifiedDate.getTime();
+        comparison = dateA - dateB;
+      }
+      
+      return sortOrder === "desc" ? -comparison : comparison;
+    };
+
+    const sortedFolders = folders.sort(sortFunction);
+    const sortedFiles = files.sort(sortFunction);
+
+    // For type sorting, maintain folder-first order regardless of sort direction
+    if (sortBy === "type") {
+      return [...sortedFolders, ...sortedFiles];
+    }
+    
+    // For name and date sorting, mix folders and files together
+    return [...sortedFolders, ...sortedFiles].sort(sortFunction);
   }
 
   private async createFolderItem(name: string, itemPath: string): Promise<FolderItem> {
+    const fs = await import('fs/promises');
+    const stats = await fs.stat(itemPath);
     const previewImagesAbsolute = await this.getFolderPreviewImages(itemPath);
     const previewImages = previewImagesAbsolute.map(imagePath => this.getRelativePath(imagePath));
     
@@ -180,20 +228,25 @@ export class FileViewerService {
       type: "folder",
       relativePath: this.getRelativePath(itemPath),
       absolutePath: itemPath,
-      previewImages
+      previewImages,
+      modifiedDate: stats.mtime
     };
   }
 
-  private createFileItem(name: string, itemPath: string): FileItem {
+  private async createFileItem(name: string, itemPath: string): Promise<FileItem> {
+    const fs = await import('fs/promises');
+    const stats = await fs.stat(itemPath);
+    
     return {
       name,
       type: "file",
       relativePath: this.getRelativePath(itemPath),
       absolutePath: itemPath,
-      isImage: this.imageExtensions.test(name),
-      isVideo: this.videoExtensions.test(name),
-      isAudio: this.audioExtensions.test(name),
-      isZip: this.zipExtensions.test(name)
+      isImage: this.isImageFile(name),
+      isVideo: this.isVideoFile(name),
+      isAudio: this.isAudioFile(name),
+      isZip: this.isZipFile(name),
+      modifiedDate: stats.mtime
     };
   }
 
