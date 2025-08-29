@@ -7,6 +7,7 @@ export interface FileItem {
   isVideo: boolean;
   isAudio: boolean;
   isZip: boolean;
+  modifiedDate: Date;    // ファイル更新日時
 }
 
 export interface FolderItem {
@@ -15,6 +16,7 @@ export interface FolderItem {
   relativePath: string;  // 相対パス（表示用）
   absolutePath: string;  // 絶対パス（内部処理用）
   previewImages: string[]; // 絶対パス（画像API用）
+  modifiedDate: Date;    // フォルダ更新日時
 }
 
 export type DirectoryItem = FileItem | FolderItem;

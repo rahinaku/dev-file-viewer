@@ -7,6 +7,7 @@ export interface ClientFileItem {
   isVideo: boolean;
   isAudio: boolean;
   isZip: boolean;
+  modifiedDate: string;  // ISO形式の日時文字列
 }
 
 export interface ClientFolderItem {
@@ -14,6 +15,7 @@ export interface ClientFolderItem {
   type: "folder";
   path: string;  // 相対パス
   previewImages: string[];  // 相対パス
+  modifiedDate: string;  // ISO形式の日時文字列
 }
 
 export type ClientDirectoryItem = ClientFileItem | ClientFolderItem;
@@ -30,4 +32,6 @@ export interface PaginatedClientDirectoryData extends ClientDirectoryData {
   total: number;
   offset: number;
   limit: number;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
 }

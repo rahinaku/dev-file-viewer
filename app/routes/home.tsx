@@ -15,12 +15,18 @@ export async function loader({ request }: Route.LoaderArgs) {
   
   const url = new URL(request.url);
   const requestedRelativePath = url.searchParams.get("path");
+  const sortBy = url.searchParams.get("sortBy") || "name";
+  const sortOrder = (url.searchParams.get("sortOrder") || "asc") as "asc" | "desc";
   
   try {
     const fileViewerService = new FileViewerService();
     
     // 相対パスからDirectoryDataを取得
-    const directoryData = await fileViewerService.getDirectoryData(requestedRelativePath || undefined);
+    const directoryData = await fileViewerService.getDirectoryData(
+      requestedRelativePath || undefined,
+      sortBy,
+      sortOrder
+    );
     
     // 通常のページリクエストの場合
     const totalItems = directoryData.items.length;
@@ -39,14 +45,16 @@ export async function loader({ request }: Route.LoaderArgs) {
             isImage: item.isImage,
             isVideo: item.isVideo,
             isAudio: item.isAudio,
-            isZip: item.isZip
+            isZip: item.isZip,
+            modifiedDate: item.modifiedDate.toISOString()
           };
         } else {
           return {
             name: item.name,
             type: "folder" as const,
             path: item.relativePath,
-            previewImages: item.previewImages
+            previewImages: item.previewImages,
+            modifiedDate: item.modifiedDate.toISOString()
           };
         }
       }),
@@ -54,7 +62,9 @@ export async function loader({ request }: Route.LoaderArgs) {
       hasMore: shouldUsePagination,
       total: totalItems,
       offset: 0,
-      limit: initialLimit
+      limit: initialLimit,
+      sortBy: sortBy,
+      sortOrder: sortOrder
     };
     
     return sanitizedData;

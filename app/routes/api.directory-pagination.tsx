@@ -8,11 +8,15 @@ export async function loader({ request }: Route.LoaderArgs) {
   const requestedRelativePath = url.searchParams.get("path");
   const offset = parseInt(url.searchParams.get("offset") || "0", 10);
   const limit = parseInt(url.searchParams.get("limit") || "50", 10);
+  const sortBy = url.searchParams.get("sortBy") || "name";
+  const sortOrder = (url.searchParams.get("sortOrder") || "asc") as "asc" | "desc";
   
   console.log('API Pagination request:', { 
     requestedRelativePath, 
     offset, 
     limit,
+    sortBy,
+    sortOrder,
     decodedPath: requestedRelativePath ? decodeURIComponent(requestedRelativePath) : null
   });
   
@@ -20,7 +24,11 @@ export async function loader({ request }: Route.LoaderArgs) {
     const fileViewerService = new FileViewerService();
     
     // 全てのディレクトリデータを取得してからページネーション適用
-    const allDirectoryData = await fileViewerService.getDirectoryData(requestedRelativePath || undefined);
+    const allDirectoryData = await fileViewerService.getDirectoryData(
+      requestedRelativePath || undefined,
+      sortBy,
+      sortOrder
+    );
     const totalItems = allDirectoryData.items.length;
     const paginatedItems = allDirectoryData.items.slice(offset, offset + limit);
     const hasMore = offset + limit < totalItems;
@@ -38,14 +46,16 @@ export async function loader({ request }: Route.LoaderArgs) {
             isImage: item.isImage,
             isVideo: item.isVideo,
             isAudio: item.isAudio,
-            isZip: item.isZip
+            isZip: item.isZip,
+            modifiedDate: item.modifiedDate.toISOString()
           };
         } else {
           return {
             name: item.name,
             type: "folder" as const,
             path: item.relativePath,
-            previewImages: item.previewImages
+            previewImages: item.previewImages,
+            modifiedDate: item.modifiedDate.toISOString()
           };
         }
       }),
@@ -53,7 +63,9 @@ export async function loader({ request }: Route.LoaderArgs) {
       hasMore: hasMore,
       total: totalItems,
       offset: offset,
-      limit: limit
+      limit: limit,
+      sortBy: sortBy,
+      sortOrder: sortOrder
     };
     
     return Response.json(sanitizedData);
