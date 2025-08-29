@@ -1,5 +1,7 @@
+import { AiOutlineLoading3Quarters } from 'react-icons/ai';
+
 export function LoadingSpinner() {
   return (
-    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+    <AiOutlineLoading3Quarters className="animate-spin h-6 w-6 text-blue-600" />
   );
 }
