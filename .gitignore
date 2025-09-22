@@ -7,3 +7,10 @@
 
 # claude
 /.serena/
+
+# Local environment variables
+.env
+
+# artifacts
+*.tar
+*.local*
