@@ -1,0 +1,19 @@
+{{- if and .Values.persistence.enabled .Values.persistence.create }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ include "file-viewer.pvName" . }}
+  labels:
+    {{- include "file-viewer.labels" . | nindent 4 }}
+    name: {{ include "file-viewer.pvName" . }}
+spec:
+  capacity:
+    storage: {{ .Values.persistence.pv.capacity }}
+  accessModes:
+    {{- range .Values.persistence.pv.accessModes }}
+    - {{ . }}
+    {{- end }}
+  storageClassName: {{ .Values.persistence.pv.storageClassName }}
+  hostPath:
+    path: {{ .Values.persistence.pv.hostPath }}
+{{- end }}

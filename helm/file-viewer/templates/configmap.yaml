@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "file-viewer.fullname" . }}-config
+  labels:
+    {{- include "file-viewer.labels" . | nindent 4 }}
+data:
+  UID: {{ .Values.config.uid | quote }}
+  GID: {{ .Values.config.gid | quote }}
+  USER: {{ .Values.config.user | quote }}
