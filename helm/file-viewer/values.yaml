@@ -1,0 +1,120 @@
+# Default values for file-viewer.
+replicaCount: 1
+
+image:
+  repository: file-viewer
+  pullPolicy: Never
+  tag: latest
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+# Security context configuration
+securityContext:
+  enabled: true
+  uid: 1000  # file-viewerの内部で使われるユーザーID
+  gid: 1000  # file-viewerの内部で使われるグループID
+  user: "fileviewer"  # file-viewerの内部で使われるユーザー名
+  supplementalGroups: [4000]
+
+# ConfigMap data
+config:
+  uid: "1000"
+  gid: "1000"  
+  user: "fileviewer"
+
+# Environment variables
+env:
+  rootFolder: "/storage"
+
+# Service configuration
+service:
+  type: LoadBalancer
+  port: 3000
+  targetPort: 3000
+  protocol: TCP
+
+# Persistent Volume configuration
+persistence:
+  enabled: true
+  # Set to false to use existing PVC
+  create: true
+  # Existing claim name (if create: false)
+  existingClaim: ""
+  
+  # PV configuration
+  pv:
+    name: file-viewer-pv
+    capacity: 200Gi
+    accessModes:
+      - ReadWriteOnce
+    storageClassName: manual
+    # Path on the host to expose via file-viewer
+    hostPath: /mnt/usb-ssd/shere
+    
+  # PVC configuration  
+  pvc:
+    name: pvc-file-viewer
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 190Gi
+    storageClassName: manual
+
+# Resource limits and requests
+resources: {}
+  # limits:
+  #   cpu: 500m
+  #   memory: 512Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+# Node selector
+nodeSelector: {}
+
+# Tolerations
+tolerations: []
+
+# Affinity
+affinity: {}
+
+# Ingress configuration
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: file-viewer.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  #  - secretName: file-viewer-tls
+  #    hosts:
+  #      - file-viewer.local
+
+# Probes configuration
+livenessProbe:
+  enabled: true
+  httpGet:
+    path: /
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  enabled: true
+  httpGet:
+    path: /
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3

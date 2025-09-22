@@ -1,0 +1,20 @@
+{{- if and .Values.persistence.enabled .Values.persistence.create }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "file-viewer.pvcName" . }}
+  labels:
+    {{- include "file-viewer.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    {{- range .Values.persistence.pvc.accessModes }}
+    - {{ . }}
+    {{- end }}
+  storageClassName: {{ .Values.persistence.pvc.storageClassName }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.pvc.resources.requests.storage }}
+  selector:
+    matchLabels:
+      name: {{ include "file-viewer.pvName" . }}
+{{- end }}
