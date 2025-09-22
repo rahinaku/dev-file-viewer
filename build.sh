@@ -45,9 +45,23 @@ echo "build completed"
 
 # もし引数に--runを受け取ったら
 if [ "$1" == "--run" ]; then
-    # コンテナを起動する
-  sudo kubectl delete -f ./k8s/file-viewer.local.yaml || true
-  sudo kubectl apply -f ./k8s/file-viewer.local.yaml
+    # Helmでコンテナを起動/更新する
+    echo "Deploying with Helm..."
+    helm upgrade --install file-viewer ./helm/file-viewer --reuse-values --force --wait
+    echo "Deployment completed"
+elif [ "$1" == "--update" ]; then
+    # 既存のデプロイメントをロールアウト更新
+    echo "Rolling out update..."
+    kubectl rollout restart deployment/file-viewer
+    kubectl rollout status deployment/file-viewer --timeout=300s
+    echo "Rollout completed"
+elif [ "$1" == "--k8s" ]; then
+    # 従来のk8sマニフェストでの起動
+    sudo kubectl delete -f ./k8s/file-viewer.local.yaml || true
+    sudo kubectl apply -f ./k8s/file-viewer.local.yaml
 else
-    echo "Run the container with --run argument to start it."
+    echo "Run the container with:"
+    echo "  --run    : Deploy with Helm"
+    echo "  --update : Rollout restart existing deployment"
+    echo "  --k8s    : Deploy with k8s manifests"
 fi
