@@ -8,6 +8,7 @@ import type {
   FolderItem, 
   FileViewerServiceOptions 
 } from "../types/fileViewer";
+import { naturalSort } from "../lib/naturalSort";
 
 // .envファイルを読み込み
 config();
@@ -18,6 +19,7 @@ export class FileViewerService {
   private readonly videoExtensions = /\.(mp4|webm|ogg|mov|avi|mkv)$/i;
   private readonly audioExtensions = /\.(mp3|wav|ogg|aac|flac|m4a)$/i;
   private readonly zipExtensions = /\.(zip)$/i;
+
 
   constructor(options: FileViewerServiceOptions = {}) {
     this.rootFolder = options.rootFolder || process.env.ROOT_FOLDER || process.cwd();
@@ -179,7 +181,7 @@ export class FileViewerService {
       let comparison = 0;
       
       if (sortBy === "name") {
-        comparison = a.name.localeCompare(b.name);
+        comparison = naturalSort(a.name, b.name);
       } else if (sortBy === "type") {
         // For type sorting, folders come first, then files sorted by extension
         if (a.type === "folder" && b.type === "file") return -1;
