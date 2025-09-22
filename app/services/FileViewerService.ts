@@ -1,12 +1,13 @@
+import { config } from "dotenv";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { config } from "dotenv";
-import type { 
-  DirectoryData, 
-  DirectoryItem, 
-  FileItem, 
-  FolderItem, 
-  FileViewerServiceOptions 
+import { naturalSort } from "../lib/naturalSort";
+import type {
+  DirectoryData,
+  DirectoryItem,
+  FileItem,
+  FileViewerServiceOptions,
+  FolderItem
 } from "../types/fileViewer";
 
 // .envファイルを読み込み
@@ -29,37 +30,37 @@ export class FileViewerService {
     sortOrder: "asc" | "desc" = "asc"
   ): Promise<DirectoryData> {
     const resolvedRootFolder = path.resolve(this.rootFolder);
-    
+
     // 相対パスから絶対パスに変換
     let currentAbsolutePath: string;
     if (requestedRelativePath) {
       // 先頭のスラッシュを除去して、正しい相対パスとして扱う
-      const normalizedRelativePath = requestedRelativePath.startsWith('/') 
-        ? requestedRelativePath.slice(1) 
+      const normalizedRelativePath = requestedRelativePath.startsWith('/')
+        ? requestedRelativePath.slice(1)
         : requestedRelativePath;
       currentAbsolutePath = path.resolve(resolvedRootFolder, normalizedRelativePath);
     } else {
       currentAbsolutePath = resolvedRootFolder;
     }
-    
+
     try {
       await this.validateDirectory(currentAbsolutePath);
       await this.validatePathWithinRoot(currentAbsolutePath);
       const items = await this.readDirectoryItems(currentAbsolutePath);
-      
+
       const parentAbsolutePath = path.dirname(currentAbsolutePath);
       const resolvedCurrentPath = path.resolve(currentAbsolutePath);
       const resolvedParentPath = path.resolve(parentAbsolutePath);
-      
+
       // 相対パスに変換
       const currentRelativePath = this.getRelativePath(resolvedCurrentPath);
       const parentRelativePath = this.getRelativePath(resolvedParentPath);
-      
+
       // ROOT_FOLDERより上に行けないかチェック
-      const canGoUp = resolvedCurrentPath !== resolvedRootFolder && 
+      const canGoUp = resolvedCurrentPath !== resolvedRootFolder &&
                       resolvedParentPath.startsWith(resolvedRootFolder) &&
                       resolvedCurrentPath !== path.parse(resolvedCurrentPath).root;
-      
+
       return {
         currentRelativePath,
         currentAbsolutePath,
@@ -74,48 +75,48 @@ export class FileViewerService {
   }
 
   async getPaginatedDirectoryData(
-    requestedRelativePath?: string, 
-    offset: number = 0, 
+    requestedRelativePath?: string,
+    offset: number = 0,
     limit: number = 50
   ): Promise<DirectoryData & { hasMore: boolean; total: number; offset: number; limit: number }> {
     const resolvedRootFolder = path.resolve(this.rootFolder);
-    
+
     // 相対パスから絶対パスに変換
     let currentAbsolutePath: string;
     if (requestedRelativePath) {
-      const normalizedRelativePath = requestedRelativePath.startsWith('/') 
-        ? requestedRelativePath.slice(1) 
+      const normalizedRelativePath = requestedRelativePath.startsWith('/')
+        ? requestedRelativePath.slice(1)
         : requestedRelativePath;
       currentAbsolutePath = path.resolve(resolvedRootFolder, normalizedRelativePath);
     } else {
       currentAbsolutePath = resolvedRootFolder;
     }
-    
+
     try {
       await this.validateDirectory(currentAbsolutePath);
       await this.validatePathWithinRoot(currentAbsolutePath);
-      
+
       // 全てのアイテムを取得
       const allItems = await this.readDirectoryItems(currentAbsolutePath);
       const total = allItems.length;
-      
+
       // ページネーション適用
       const paginatedItems = allItems.slice(offset, offset + limit);
       const hasMore = offset + limit < total;
-      
+
       const parentAbsolutePath = path.dirname(currentAbsolutePath);
       const resolvedCurrentPath = path.resolve(currentAbsolutePath);
       const resolvedParentPath = path.resolve(parentAbsolutePath);
-      
+
       // 相対パスに変換
       const currentRelativePath = this.getRelativePath(resolvedCurrentPath);
       const parentRelativePath = this.getRelativePath(resolvedParentPath);
-      
+
       // ROOT_FOLDERより上に行けないかチェック
-      const canGoUp = resolvedCurrentPath !== resolvedRootFolder && 
+      const canGoUp = resolvedCurrentPath !== resolvedRootFolder &&
                       resolvedParentPath.startsWith(resolvedRootFolder) &&
                       resolvedCurrentPath !== path.parse(resolvedCurrentPath).root;
-      
+
       return {
         currentRelativePath,
         currentAbsolutePath,
@@ -143,7 +144,7 @@ export class FileViewerService {
   private async validatePathWithinRoot(directoryPath: string): Promise<void> {
     const resolvedPath = path.resolve(directoryPath);
     const resolvedRootFolder = path.resolve(this.rootFolder);
-    
+
     if (!resolvedPath.startsWith(resolvedRootFolder)) {
       throw new Error("Access denied: Path is outside root folder");
     }
@@ -154,7 +155,7 @@ export class FileViewerService {
   }
 
   private async processDirectoryItems(
-    items: fs.Dirent[], 
+    items: fs.Dirent[],
     currentPath: string,
     sortBy: string = "name",
     sortOrder: "asc" | "desc" = "asc"
@@ -164,7 +165,7 @@ export class FileViewerService {
 
     for (const item of items) {
       const itemPath = path.join(currentPath, item.name);
-      
+
       if (item.isDirectory()) {
         const folderItem = await this.createFolderItem(item.name, itemPath);
         folders.push(folderItem);
@@ -177,14 +178,14 @@ export class FileViewerService {
     // Sort folders and files separately
     const sortFunction = (a: DirectoryItem, b: DirectoryItem) => {
       let comparison = 0;
-      
+
       if (sortBy === "name") {
-        comparison = a.name.localeCompare(b.name);
+        comparison = naturalSort(a.name, b.name);
       } else if (sortBy === "type") {
         // For type sorting, folders come first, then files sorted by extension
         if (a.type === "folder" && b.type === "file") return -1;
         if (a.type === "file" && b.type === "folder") return 1;
-        
+
         if (a.type === "file" && b.type === "file") {
           const extA = path.extname(a.name).toLowerCase();
           const extB = path.extname(b.name).toLowerCase();
@@ -201,7 +202,7 @@ export class FileViewerService {
         const dateB = b.modifiedDate.getTime();
         comparison = dateA - dateB;
       }
-      
+
       return sortOrder === "desc" ? -comparison : comparison;
     };
 
@@ -212,7 +213,7 @@ export class FileViewerService {
     if (sortBy === "type") {
       return [...sortedFolders, ...sortedFiles];
     }
-    
+
     // For name and date sorting, mix folders and files together
     return [...sortedFolders, ...sortedFiles].sort(sortFunction);
   }
@@ -222,7 +223,7 @@ export class FileViewerService {
     const stats = await fs.stat(itemPath);
     const previewImagesAbsolute = await this.getFolderPreviewImages(itemPath);
     const previewImages = previewImagesAbsolute.map(imagePath => this.getRelativePath(imagePath));
-    
+
     return {
       name,
       type: "folder",
@@ -236,7 +237,7 @@ export class FileViewerService {
   private async createFileItem(name: string, itemPath: string): Promise<FileItem> {
     const fs = await import('fs/promises');
     const stats = await fs.stat(itemPath);
-    
+
     return {
       name,
       type: "file",
@@ -253,12 +254,12 @@ export class FileViewerService {
   private getRelativePath(absolutePath: string): string {
     const resolvedRootFolder = path.resolve(this.rootFolder);
     const resolvedPath = path.resolve(absolutePath);
-    
+
     // ROOT_FOLDERと同じ場合は "/"
     if (resolvedPath === resolvedRootFolder) {
       return "/";
     }
-    
+
     // ROOT_FOLDERからの相対パスを計算
     const relativePath = path.relative(resolvedRootFolder, resolvedPath);
     return "/" + relativePath.replace(/\\/g, "/"); // Windowsパス区切り文字を正規化
@@ -267,7 +268,7 @@ export class FileViewerService {
   private async getFolderPreviewImages(folderPath: string): Promise<string[]> {
     try {
       const folderContents = await fs.promises.readdir(folderPath, { withFileTypes: true });
-      
+
       return folderContents
         .filter(file => file.isFile() && this.imageExtensions.test(file.name))
         .slice(0, 4)
