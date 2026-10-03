@@ -4,6 +4,8 @@ import type { ClientFileItem } from "../types/clientTypes";
 import { ImageViewer } from "./ImageViewer";
 import { VideoViewer } from "./VideoViewer";
 import { AudioViewer } from "./AudioViewer";
+import { FloatingMediaNavigation } from "./FloatingMediaNavigation";
+import type { NavigationPosition } from "../lib/floatingNavigation";
 import { getFileApiEndpoint, getFileType } from "~/lib/fileTypeUtils";
 
 interface MediaModalProps {
@@ -28,6 +30,9 @@ function downloadFile(file: ClientFileItem) {
 export function MediaModal({ isOpen, currentFile, files, onClose, onNext, onPrev }: MediaModalProps) {
   console.log('MediaModal render:', { isOpen, currentFile: currentFile?.name, fileCount: files.length });
   
+  // Keep the position across file changes and modal reopenings until page reload.
+  const [navigationPosition, setNavigationPosition] = useState<NavigationPosition | null>(null);
+
   // Swipe state management
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
   const [touchMove, setTouchMove] = useState<{ x: number; y: number } | null>(null);
@@ -139,7 +144,7 @@ export function MediaModal({ isOpen, currentFile, files, onClose, onNext, onPrev
       {/* Close button */}
       <button
         onClick={onClose}
-        className="absolute top-4 right-4 text-white hover:text-gray-300 z-10"
+        className="absolute top-[calc(1rem+env(safe-area-inset-top,0px))] right-[calc(1rem+env(safe-area-inset-right,0px))] text-white hover:text-gray-300 z-10"
         aria-label="Close modal"
       >
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -150,7 +155,7 @@ export function MediaModal({ isOpen, currentFile, files, onClose, onNext, onPrev
       {/* Download button */}
       <button
         onClick={() => downloadFile(currentFile)}
-        className="absolute top-4 right-16 text-white hover:text-gray-300 z-10"
+        className="absolute top-[calc(1rem+env(safe-area-inset-top,0px))] right-[calc(4rem+env(safe-area-inset-right,0px))] text-white hover:text-gray-300 z-10"
         aria-label="Download file"
       >
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -162,7 +167,7 @@ export function MediaModal({ isOpen, currentFile, files, onClose, onNext, onPrev
       {hasPrev && (
         <button
           onClick={onPrev}
-          className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 z-10"
+          className="desktop-media-navigation absolute left-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 z-10"
           aria-label="Previous file"
         >
           <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -174,7 +179,7 @@ export function MediaModal({ isOpen, currentFile, files, onClose, onNext, onPrev
       {hasNext && (
         <button
           onClick={onNext}
-          className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 z-10"
+          className="desktop-media-navigation absolute right-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 z-10"
           aria-label="Next file"
         >
           <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -182,6 +187,15 @@ export function MediaModal({ isOpen, currentFile, files, onClose, onNext, onPrev
           </svg>
         </button>
       )}
+
+      <FloatingMediaNavigation
+        position={navigationPosition}
+        onPositionChange={setNavigationPosition}
+        hasPrev={hasPrev}
+        hasNext={hasNext}
+        onPrev={onPrev}
+        onNext={onNext}
+      />
 
       {/* Media container */}
       <div 
@@ -217,7 +231,7 @@ export function MediaModal({ isOpen, currentFile, files, onClose, onNext, onPrev
       </div>
 
       {/* File info */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white text-center">
+      <div className="media-modal-file-info absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white text-center">
         <p className="text-lg font-medium">{currentFile.name}</p>
         <p className="text-sm text-gray-300">
           {currentIndex + 1} / {files.length}

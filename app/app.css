@@ -13,3 +13,32 @@ body {
     color-scheme: dark;
   }
 }
+
+.mobile-media-navigation {
+  display: none;
+  padding-top: calc(16px + env(safe-area-inset-top, 0px));
+  padding-right: calc(16px + env(safe-area-inset-right, 0px));
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  padding-left: calc(16px + env(safe-area-inset-left, 0px));
+}
+
+.floating-media-navigation {
+  right: calc(16px + env(safe-area-inset-right, 0px));
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+}
+
+@media (width < 768px), (pointer: coarse) and (hover: none) {
+  .mobile-media-navigation {
+    display: block;
+  }
+
+  .desktop-media-navigation {
+    display: none;
+  }
+
+  .media-modal-file-info {
+    bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+    width: calc(100% - 32px);
+    overflow-wrap: anywhere;
+  }
+}
