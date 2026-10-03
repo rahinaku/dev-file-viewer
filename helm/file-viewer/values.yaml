@@ -51,7 +51,7 @@ persistence:
       - ReadWriteOnce
     storageClassName: manual
     # Path on the host to expose via file-viewer
-    hostPath: /mnt/usb-ssd/shere
+    hostPath: /mnt/cached-sdb/nas
     
   # PVC configuration  
   pvc:
